@@ -68,6 +68,7 @@ exit/b 0
 
 :RunTester
 if not exist "%tester_dir%tester.exe" call :BuildTester || exit /b 1
+echo Running tester ...
 "%tester_dir%tester.exe" || (
     echo Exited with code !errorlevel!
     exit /b 1
@@ -77,10 +78,8 @@ exit/b 0
 :RunPlugin
 if not exist "%plugin_install_dir%" call :GetDeps || exit /b 1
 if not exist "%plugin_dir%bin\plugin.dll" call :BuildPlugin || exit /b 1
+echo Running OpenTabletDriver.UX.Wpf ...
 copy /y "%plugin_dir%bin\plugin.dll" "%plugin_install_dir%" > nul
 copy /y "%plugin_dir%metadata.json" "%plugin_install_dir%" > nul
-"%plugin_dir%dep\otd\OpenTabletDriver.UX.Wpf.exe" || (
-    echo Exited with code !errorlevel!
-    exit /b 1
-)
+start %plugin_dir%dep\otd\OpenTabletDriver.UX.Wpf.exe
 exit/b 0

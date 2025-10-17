@@ -64,6 +64,8 @@ int main(int argc, char const *argv[]) {
     SendMessageA(s_bar, SB_SETPARTS, 1, (LPARAM)(int[]){ -1 });
     set_status("No WM_POINTER messages were recieved yet.");
 
+    // EnableMouseInPointer(TRUE);
+
     ShowWindow(s_hwnd, SW_SHOW);
 
     while (s_running) {
@@ -94,8 +96,14 @@ LRESULT window_event_handler(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_POINTERUP:
     case WM_POINTERDOWN:
     case WM_POINTERUPDATE:
+    case WM_POINTERCAPTURECHANGED:
+    case WM_POINTERDEVICECHANGE:
+    case WM_POINTERACTIVATE:
         set_status("Message: WM_POINTER (%u)\n", msg);
         break;
+
+    default:
+        printf("%u\n", msg);
     }
 
     return DefWindowProcA(hwnd, msg, wp, lp);
