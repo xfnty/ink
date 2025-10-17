@@ -57,7 +57,7 @@ exit /b 0
 
 :BuildPlugin
 echo Building plugin ...
-dotnet build "%plugin_dir%." -o "%plugin_dir%bin"
+dotnet build "%plugin_dir%." -o "%plugin_dir%bin" || exit /b 1
 exit/b 0
 
 :BuildTester

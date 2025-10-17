@@ -7,6 +7,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <windowsx.h>
 #include <commctrl.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -99,11 +100,33 @@ LRESULT window_event_handler(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_POINTERCAPTURECHANGED:
     case WM_POINTERDEVICECHANGE:
     case WM_POINTERACTIVATE:
-        set_status("Message: WM_POINTER (%u)\n", msg);
+        {
+            POINTER_INFO inf = {0};
+            UINT32 id = GET_POINTERID_WPARAM(wp);
+            if (GetPointerInfo(id, &inf)) {
+                POINTER_PEN_INFO pinf = {0};
+                if (GetPointerPenInfo(id, &pinf)) {
+                    set_status(
+                        "Pointer x=%d y=%d down=%d pressure=%d B1=%d B2=%d B3=%d B4=%d B5=%d (%u)\n",
+                        inf.ptPixelLocation.x,
+                        inf.ptPixelLocation.y,
+                        (bool)(inf.pointerFlags & POINTER_FLAG_INCONTACT),
+                        pinf.pressure,
+                        (bool)((inf.pointerFlags & POINTER_FLAG_FIRSTBUTTON) && (inf.ButtonChangeType & POINTER_CHANGE_FIRSTBUTTON_DOWN)),
+                        (bool)((inf.pointerFlags & POINTER_FLAG_SECONDBUTTON) && (inf.ButtonChangeType & POINTER_CHANGE_SECONDBUTTON_DOWN)),
+                        (bool)((inf.pointerFlags & POINTER_FLAG_THIRDBUTTON) && (inf.ButtonChangeType & POINTER_CHANGE_THIRDBUTTON_DOWN)),
+                        (bool)((inf.pointerFlags & POINTER_FLAG_FOURTHBUTTON) && (inf.ButtonChangeType & POINTER_CHANGE_FOURTHBUTTON_DOWN)),
+                        (bool)((inf.pointerFlags & POINTER_FLAG_FIFTHBUTTON) && (inf.ButtonChangeType & POINTER_CHANGE_FIFTHBUTTON_DOWN)),
+                        msg
+                    );
+                } else {
+                    set_status("GetPointerPenInfo() failed with code %d (inf.type=%d)\n", GetLastError(), inf.pointerType);
+                }
+            } else {
+                set_status("GetPointerInfo() failed with code %d\n", GetLastError());
+            }
+        }
         break;
-
-    default:
-        printf("%u\n", msg);
     }
 
     return DefWindowProcA(hwnd, msg, wp, lp);

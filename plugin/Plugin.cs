@@ -12,10 +12,10 @@ using OpenTabletDriver.Plugin.Tablet;
 namespace XfntyPlugins
 {
     using HANDLE = IntPtr;
-    using HWND = IntPtr;
-    using WORD = UInt16;
-    using DWORD = UInt32;
-    using UINT = UInt32;
+    using HWND   = IntPtr;
+    using WORD   = UInt16;
+    using DWORD  = UInt32;
+    using UINT   = UInt32;
     using WPARAM = UIntPtr;
     using LPARAM = Int64;
 
@@ -24,33 +24,22 @@ namespace XfntyPlugins
     {
         public int X;
         public int Y;
-
-        public POINT(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-    }
-
-    public enum MSG : UINT
-    {
-        WM_POINTERUPDATE = 0x0245,
     }
 
     public enum POINTER_INPUT_TYPE
     {
-        PT_POINTER,
-        PT_TOUCH,
-        PT_PEN,
-        PT_MOUSE,
-        PT_TOUCHPAD
+        PT_POINTER  = 1,
+        PT_TOUCH    = 2,
+        PT_PEN      = 3,
+        PT_MOUSE    = 4,
+        PT_TOUCHPAD = 5
     }
 
     public enum POINTER_FEEDBACK_MODE
     {
-        DEFAULT = 1,
+        DEFAULT  = 1,
         INDIRECT = 2,
-        NONE = 3
+        NONE     = 3
     }
 
     public enum POINTER_BUTTON_CHANGE_TYPE
@@ -153,29 +142,27 @@ namespace XfntyPlugins
         public static extern HANDLE CreateSyntheticPointerDevice(POINTER_INPUT_TYPE pointerType, ulong maxCount, POINTER_FEEDBACK_MODE mode);
 
         [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        public static extern void DestroySyntheticPointerDevice(HANDLE pen);
+
+        [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool InjectSyntheticPointerInput(HANDLE device, [In, MarshalAs(UnmanagedType.LPArray)] POINTER_TYPE_INFO[] pointerInfo, uint count);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern HANDLE GetForegroundWindow();
-
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool PostMessageA(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
     }
 
-    public class MyPointer : IAbsolutePointer, IMouseButtonHandler, IPressureHandler, ITiltHandler, IEraserHandler, IHoverDistanceHandler
+    public class MyPointer : IAbsolutePointer, ISynchronousPointer, IMouseButtonHandler, IPressureHandler, ITiltHandler, IEraserHandler, IHoverDistanceHandler
     {
-        private TabletReference? _tablet;
-        private IVirtualScreen? _screen;
         private HANDLE _pen;
         private readonly POINTER_TYPE_INFO[]? _pointer;
 
-        public MyPointer(TabletReference tablet, IVirtualScreen screen)
-        {
-            _tablet = tablet;
-            _screen = screen;
+        private uint  _pressure;
+        private POINT _position;
+        private bool  _changed;
 
+        public MyPointer()
+        {
             _pointer = new POINTER_TYPE_INFO[]
             {
                 new POINTER_TYPE_INFO
@@ -185,37 +172,52 @@ namespace XfntyPlugins
                     {
                         pointerInfo = new POINTER_INFO
                         {
-                            pointerFlags = POINTER_FLAGS.PRIMARY,
                             pointerType = POINTER_INPUT_TYPE.PT_PEN,
-                            pointerId = 1,
-                            ptPixelLocation = new POINT(),
-                            ptPixelLocationRaw = new POINT(),
-                            dwTime = 0,
-                            PerformanceCount = 0,
+                            ptPixelLocation = new POINT{},
+                            ptPixelLocationRaw = new POINT{},
                         },
                         penMask = PEN_MASK.PRESSURE,
                     }
                 }
             };
 
-            _pen = Win32.CreateSyntheticPointerDevice(POINTER_INPUT_TYPE.PT_PEN, 1, POINTER_FEEDBACK_MODE.NONE);
+            _pen = Win32.CreateSyntheticPointerDevice(
+                POINTER_INPUT_TYPE.PT_PEN,
+                1,
+                POINTER_FEEDBACK_MODE.DEFAULT
+            );
             if (_pen == IntPtr.Zero)
             {
                 throw new Exception($"CreateSyntheticPointerDevice() failed with code {Marshal.GetLastWin32Error()}");
             }
-            Log.Write("WM_POINTER", $"Created synthetic pointer device {_pen}");
         }
 
-        public unsafe void SendInput()
+        ~MyPointer()
         {
-            HWND hwnd = Win32.GetForegroundWindow();
-            _pointer![0].penInfo.pointerInfo.hwndTarget = hwnd;
-            if (!Win32.InjectSyntheticPointerInput(_pen, _pointer!, 1))
-            {
-                throw new Exception($"InjectSyntheticPointerInput() failed with code {Marshal.GetLastWin32Error()}");
-            }
+            Win32.DestroySyntheticPointerDevice(_pen);
+        }
 
-            Log.Write("WM_POINTER", $"send input to {_pointer![0].penInfo.pointerInfo.hwndTarget}");
+        public void Flush()
+        {
+            if (!_changed)
+                return;
+            
+            POINTER_FLAGS flags = POINTER_FLAGS.INRANGE;
+            if (_pressure > 0) flags |= POINTER_FLAGS.INCONTACT | POINTER_FLAGS.DOWN;
+            else               flags |= POINTER_FLAGS.UP;
+
+            _pointer![0].penInfo.pointerInfo.hwndTarget = Win32.GetForegroundWindow();
+            _pointer[0].penInfo.pointerInfo.pointerFlags = flags;
+            _pointer[0].penInfo.pressure = _pressure;
+            _pointer[0].penInfo.pointerInfo.ptPixelLocation = _position;
+            _pointer[0].penInfo.pointerInfo.ptPixelLocationRaw = _position;
+            Win32.InjectSyntheticPointerInput(_pen, _pointer!, 1);
+
+            _changed = false;
+        }
+
+        public void Reset()
+        {
         }
 
         public void MouseDown(MouseButton button)
@@ -228,16 +230,8 @@ namespace XfntyPlugins
 
         public void SetPressure(float percentage)
         {
-            _pointer![0].penInfo.pressure = (uint)(1024 * percentage);
-            if (percentage > 0)
-            {
-                _pointer![0].penInfo.pointerInfo.pointerFlags = POINTER_FLAGS.INRANGE | POINTER_FLAGS.DOWN | POINTER_FLAGS.INCONTACT | POINTER_FLAGS.FIRSTBUTTON;
-            }
-            else
-            {
-                _pointer![0].penInfo.pointerInfo.pointerFlags = POINTER_FLAGS.INRANGE | POINTER_FLAGS.UP;
-            }
-            SendInput();
+            _pressure = (uint)(1024 * percentage);
+            _changed = true;
         }
 
         public void SetTilt(Vector2 tilt)
@@ -254,40 +248,15 @@ namespace XfntyPlugins
 
         public void SetPosition(Vector2 pos)
         {
-            POINT p = new POINT((int)pos.X, (int)pos.Y);
-            _pointer![0].penInfo.pointerInfo.pointerFlags = POINTER_FLAGS.INRANGE;
-            _pointer![0].penInfo.pointerInfo.ptPixelLocation = p;
-            _pointer[0].penInfo.pointerInfo.ptPixelLocationRaw = p;
-            SendInput();
+            _position.X = (int)pos.X;
+            _position.Y = (int)pos.Y;
+            _changed = true;
         }
     }
 
-    [PluginName("WM_POINTER Absolute Mode")]
+    [PluginName("Windows Ink")]
     public class WMPointerAbsoluteMode : AbsoluteOutputMode
     {
-        private MyPointer? _pointer;
-        private IVirtualScreen? _virtualScreen;
-
-        [Resolved]
-        public IServiceProvider ServiceProvider
-        {
-            set => _virtualScreen = (IVirtualScreen)value.GetService(typeof(IVirtualScreen))!;
-        }
-
-        public override TabletReference Tablet
-        {
-            get => base.Tablet;
-            set
-            {
-                base.Tablet = value;
-                _pointer = new MyPointer(value, _virtualScreen!);
-            }
-        }
-
-        public override IAbsolutePointer Pointer
-        {
-            get => _pointer!;
-            set { }
-        }
+        public override IAbsolutePointer Pointer { get; set; } = new MyPointer();
     }
 }

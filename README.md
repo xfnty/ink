@@ -1,5 +1,12 @@
+> [!NOTE]
+> This plugin reinvents [Windows Ink](https://github.com/X9VoiD/VoiDPlugins/wiki/WindowsInk)
+> plugin by [X9VoiD](https://github.com/X9VoiD/) but is *worse*.
+
 This plugin for [OpenTabletDriver][otd] sends [WM_POINTER][wmp] messages to focused windows like 
-[PaintTool SAI][sai].
+[PaintTool SAI 2][sai].
+
+**Status**: SAI2 works as well as other apps that support WM_POINTER messages. Buttons, tilt, and 
+rotation are not implemented.
 
 [otd]: https://opentabletdriver.net/
 [wmp]: https://learn.microsoft.com/en-us/windows/win32/inputmsg/wm-pointerdown
