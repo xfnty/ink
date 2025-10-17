@@ -46,7 +46,6 @@ exit /b 0
 :Package
 if not exist "%plugin_dir%bin\plugin.dll" call :BuildPlugin || exit /b 1
 echo Packaging plugin ...
-mkdir "%plugin_dir%dist" 2> nul
 copy /y "%plugin_dir%metadata.json" "%plugin_dir%bin" > nul
 pushd "%plugin_dir%bin"
 :: FIXME: tar creates "broken" package, i.e. Windows Explorer can't open it for some reason 
