@@ -1,0 +1,13 @@
+{
+  "Name": "Simulate WM_POINTER messages",
+  "Owner": "xfnty",
+  "Description": "Sends WM_POINTER messages to active window with tilt and pressure data.\nThis plugin was created to make PaintTool SAI work with OpenTabletDriver.",
+  "PluginVersion": "0.1.0",
+  "SupportedDriverVersion": "0.6.1.0",
+  "RepositoryUrl": "https://github.com/xfnty/otd-wmpointer",
+  "DownloadUrl": "https://github.com/xfnty/otd-wmpointer/releases/download/latest/plugin.zip",
+  "CompressionFormat": "zip",
+  "SHA256": "",
+  "WikiUrl": "https://github.com/xfnty/otd-wmpointer",
+  "LicenseIdentifier": "MIT"
+}
