@@ -1,0 +1,9 @@
+# Files
+*.ignore
+*.obj
+*.exe
+
+# Folders
+*.ignore/
+obj/
+bin/
