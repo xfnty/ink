@@ -1,6 +1,4 @@
-> [!WARNING]
-> This plugin is like [Windows Ink](https://github.com/X9VoiD/VoiDPlugins/wiki/WindowsInk)
-> by [X9VoiD](https://github.com/X9VoiD/) but ***worse***.
+
 
 **Status**: SAI2 works as well as other apps that support WM_POINTER messages. Buttons, tilt, and 
 rotation are not implemented.
