@@ -1,10 +1,6 @@
 # Files
 *.ignore
-*.obj
-*.exe
 
 # Folders
+/out/
 *.ignore/
-obj/
-bin/
-dep/
