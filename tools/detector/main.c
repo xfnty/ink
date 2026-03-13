@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
     WNDCLASSA s_wndclass = {
         .style = CS_HREDRAW | CS_VREDRAW,
         .hInstance = GetModuleHandle(0),
-        .lpszClassName = "tester",
+        .lpszClassName = "detector",
         .lpfnWndProc = window_event_handler,
         .hCursor = LoadCursorA(0, IDC_ARROW),
         .hbrBackground = GetStockObject(WHITE_BRUSH),
@@ -35,8 +35,8 @@ int main(int argc, char const *argv[]) {
     RegisterClassA(&s_wndclass);
     s_hwnd = CreateWindowExA(
         0,
-        "tester",
-        "Plugin Tester",
+        "detector",
+        "Windows Ink Detector",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
         CW_USEDEFAULT, CW_USEDEFAULT,

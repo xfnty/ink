@@ -13,8 +13,8 @@ for %%a in (%*) do (
         call :Build || goto :ExitError
     ) else if "%%a"=="dist" (
         call :Dist || goto :ExitError
-    ) else if "%%a"=="test" (
-        call :Test || goto :ExitError
+    ) else if "%%a"=="detect" (
+        call :Detect || goto :ExitError
     ) else (
         echo Unknown command !esc![1;91m%%a!esc![0m
         goto :ExitError
@@ -27,7 +27,8 @@ goto :Exit
 echo Usage: project [commands...]
 echo.
 echo Available commands:
-echo   build        Build plugin and tester.
+echo   build        Build everything.
+echo   detect       Start Windows Ink Detector app.
 echo   dist         Package plugin for distribution.
 echo   clean        Remove build files.
 echo.
@@ -49,11 +50,11 @@ dotnet build "%~dp0plugin" -p:BaseIntermediateOutputPath="%TMP_DIR%plugin\obj/" 
     type "%TMP_DIR%plugin\build.log" && exit /b 1
 )
 
-echo !esc![1;90mBuilding !esc![1;34mTester!esc![0m
-mkdir "%TMP_DIR%tester" "%OUT_DIR%tester" 2> nul
-cl.exe /options:strict /nologo /std:c11 "%~dp0tools\tester\main.c" /Fo:"%TMP_DIR%tester\main.obj" ^
-/Fe:"%OUT_DIR%tester\tester.exe" > "%TMP_DIR%tester\build.log" || (
-    type "%TMP_DIR%tester\build.log" && exit /b 1
+echo !esc![1;90mBuilding !esc![1;34mDetector!esc![0m
+mkdir "%TMP_DIR%detector" "%OUT_DIR%detector" 2> nul
+cl.exe /options:strict /nologo /std:c11 "%~dp0tools\detector\main.c" /Fo:"%TMP_DIR%detector\main.obj" ^
+/Fe:"%OUT_DIR%detector\detector.exe" > "%TMP_DIR%detector\build.log" || (
+    type "%TMP_DIR%detector\build.log" && exit /b 1
 )
 
 echo !esc![1;90mBuilding !esc![1;34mMetadata Generator!esc![0m
@@ -79,9 +80,9 @@ tar -acf "%OUT_DIR%Ink.zip" -C "%OUT_DIR%plugin" Ink.dll Ink.pdb metadata.json
 exit /b 0
 
 
-:Test
-echo !esc![1;90mTesting!esc![0m
-"%OUT_DIR%tester\tester.exe"
+:Detect
+echo !esc![1;90mRunning !esc![1;34mDetector!esc![0m
+"%OUT_DIR%detector\detector.exe"
 if !errorlevel! neq 0 (
     echo !esc![1;90mExited with code !esc![1;91m!errorlevel!!esc![0m
     exit /b 1
