@@ -11,6 +11,10 @@ for %%a in (%*) do (
         call :Clean || goto :ExitError
     ) else if "%%a"=="build" (
         call :Build || goto :ExitError
+    ) else if "%%a"=="setup" (
+        call :Setup || goto :ExitError
+    ) else if "%%a"=="test" (
+        call :Test || goto :ExitError
     ) else if "%%a"=="dist" (
         call :Dist || goto :ExitError
     ) else if "%%a"=="detect" (
@@ -27,7 +31,9 @@ goto :Exit
 echo Usage: project [commands...]
 echo.
 echo Available commands:
+echo   setup        Download local copy of OpenTabletDriver for testing the plugin.
 echo   build        Build everything.
+echo   test         Test plugin with local OpenTabletDriver copy.
 echo   detect       Start Windows Ink Detector app.
 echo   dist         Package plugin for distribution.
 echo   clean        Remove build files.
@@ -71,6 +77,28 @@ if !errorlevel! neq 0 (
     echo !esc![1;90mFailed with code !esc![1;91m!errorlevel!!esc![0m
     exit /b 1
 )
+exit /b 0
+
+
+:Setup
+echo !esc![1;90mDownloading !esc![1;34mOpenTabletDriver!esc![0m
+mkdir "%TMP_DIR%otd" 2> nul
+set url=https://github.com/OpenTabletDriver/OpenTabletDriver/releases/download/v0.6.6.2/OpenTabletDriver-0.6.6.2_win-x64.zip
+bitsadmin /transfer download /download /priority high "%url%" "%TMP_DIR%otd\otd.zip" > "%TMP_DIR%otd\download.log" 2>&1
+if !errorlevel! neq 0 (
+    type "%TMP_DIR%otd\download.log"
+    exit /b 1
+)
+tar -xf "%TMP_DIR%otd\otd.zip" -C "%TMP_DIR%otd"
+exit /b 0
+
+
+:Test
+echo !esc![1;90mStarting !esc![1;34mOpenTabletDriver!esc![0m
+mkdir "%TMP_DIR%otd\userdata\Plugins\Ink" 2> nul
+copy /y "%OUT_DIR%plugin\Ink.dll" "%TMP_DIR%otd\userdata\Plugins\Ink" > nul
+copy /y "%OUT_DIR%plugin\metadata.json" "%TMP_DIR%otd\userdata\Plugins\Ink" > nul
+start "" "%TMP_DIR%otd\OpenTabletDriver.UX.Wpf.exe"
 exit /b 0
 
 

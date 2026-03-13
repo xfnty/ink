@@ -5,4 +5,6 @@ Requirements for building:
 
 To build everything and start Windows Ink tester app, run `project build detect`.
 
+To test the plugin in OpenTabletDriver, run `project setup build test`.
+
 To package the plugin, run `project build dist`.
