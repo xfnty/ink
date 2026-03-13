@@ -52,7 +52,7 @@ int main(int argc, char const *argv[]) {
         DispatchMessageA(&m);
     }
 
-    return 1;
+    return 0;
 }
 
 LRESULT window_event_handler(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
