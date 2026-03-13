@@ -86,8 +86,17 @@ int main(int argc, const char **argv) {
         return errno;
     }
 
+    char version[256];
+    int versionLen = strlen(argv[2]);
+    if (versionLen > 0) {
+        strncpy(version, argv[2], versionLen);
+    } else {
+        versionLen = 5;
+        strncpy(version, "0.1.0", versionLen);
+    }
+
     char text[4096];
-    int textlen = snprintf(text, sizeof(text), template, argv[2], hash_text);
+    int textlen = snprintf(text, sizeof(text), template, version, hash_text);
     _write(metadata, text, textlen);
 
     return 0;

@@ -71,7 +71,7 @@ cl.exe /options:strict /nologo /std:c11 "%~dp0tools\meta\main.c" /Fo:"%TMP_DIR%m
 )
 
 echo !esc![1;90mGenerating metadata.json!esc![0m
-for /f "tokens=*" %%i in ('git rev-parse --short HEAD') do set version=%%i
+for /f "tokens=*" %%i in ('git tag --points-at HEAD') do set version=%%i
 "%OUT_DIR%meta\meta.exe" "%OUT_DIR%plugin\Ink.dll" "!version!" "%OUT_DIR%plugin\metadata.json"
 if !errorlevel! neq 0 (
     echo !esc![1;90mFailed with code !esc![1;91m!errorlevel!!esc![0m
