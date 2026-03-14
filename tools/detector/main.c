@@ -4,7 +4,7 @@
 
 #pragma warning(disable:5105)
 
-#define POINTER_RADIUS_MAX 30
+#define POINTER_RADIUS_MAX 15
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -37,7 +37,7 @@ int main(int argc, char const *argv[]) {
         0,
         "detector",
         "Windows Ink Detector",
-        WS_OVERLAPPEDWINDOW,
+        WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT,
         CW_USEDEFAULT, CW_USEDEFAULT,
         0,
@@ -73,10 +73,11 @@ LRESULT window_event_handler(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         InvalidateRect(hwnd, 0, 1);
         break;
 
+    case WM_ERASEBKGND:
+        return 1;
+
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
-
-        FillRect(hdc, &s_clrect, s_wndclass.hbrBackground);
 
         p = s_pen.pointerInfo.ptPixelLocation;
         ScreenToClient(hwnd, &p);

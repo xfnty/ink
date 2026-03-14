@@ -56,18 +56,24 @@ dotnet build "%~dp0plugin" -p:BaseIntermediateOutputPath="%TMP_DIR%plugin\obj/" 
     type "%TMP_DIR%plugin\build.log" && exit /b 1
 )
 
-echo !esc![1;90mBuilding !esc![1;34mDetector!esc![0m
-mkdir "%TMP_DIR%detector" "%OUT_DIR%detector" 2> nul
-cl.exe /options:strict /nologo /std:c11 "%~dp0tools\detector\main.c" /Fo:"%TMP_DIR%detector\main.obj" ^
-/Fe:"%OUT_DIR%detector\detector.exe" > "%TMP_DIR%detector\build.log" || (
-    type "%TMP_DIR%detector\build.log" && exit /b 1
+call :IsFileNewerThan "%~dp0tools\detector\main.c" "%OUT_DIR%detector\detector.exe"
+if !errorlevel! equ 0 (
+    echo !esc![1;90mBuilding !esc![1;34mDetector!esc![0m
+    mkdir "%TMP_DIR%detector" "%OUT_DIR%detector" 2> nul
+    cl.exe /options:strict /nologo /std:c11 "%~dp0tools\detector\main.c" /Fo:"%TMP_DIR%detector\main.obj" ^
+    /Fe:"%OUT_DIR%detector\detector.exe" > "%TMP_DIR%detector\build.log" || (
+        type "%TMP_DIR%detector\build.log" && exit /b 1
+    )
 )
 
-echo !esc![1;90mBuilding !esc![1;34mMetadata Generator!esc![0m
-mkdir "%TMP_DIR%meta" "%OUT_DIR%meta" 2> nul
-cl.exe /options:strict /nologo /std:c11 "%~dp0tools\meta\main.c" /Fo:"%TMP_DIR%meta\main.obj" ^
-/Fe:"%OUT_DIR%meta\meta.exe" > "%TMP_DIR%meta\build.log" || (
-    type "%TMP_DIR%meta\build.log" && exit /b 1
+call :IsFileNewerThan "%~dp0tools\meta\main.c" "%OUT_DIR%meta\meta.exe"
+if !errorlevel! equ 0 (
+    echo !esc![1;90mBuilding !esc![1;34mMetadata Generator!esc![0m
+    mkdir "%TMP_DIR%meta" "%OUT_DIR%meta" 2> nul
+    cl.exe /options:strict /nologo /std:c11 "%~dp0tools\meta\main.c" /Fo:"%TMP_DIR%meta\main.obj" ^
+    /Fe:"%OUT_DIR%meta\meta.exe" > "%TMP_DIR%meta\build.log" || (
+        type "%TMP_DIR%meta\build.log" && exit /b 1
+    )
 )
 
 echo !esc![1;90mGenerating metadata.json!esc![0m
@@ -90,6 +96,7 @@ if !errorlevel! neq 0 (
     exit /b 1
 )
 tar -xf "%TMP_DIR%otd\otd.zip" -C "%TMP_DIR%otd"
+mkdir "%TMP_DIR%otd\userdata" 2> nul
 exit /b 0
 
 
@@ -121,3 +128,9 @@ exit /b 0
 :ExitError
 cmd /c exit /b 1
 :Exit
+
+
+:IsFileNewerThan :: source destination
+if not exist "%2" exit /b 0
+xcopy /D /L /Y "%1" "%2" | FINDSTR /E /C:"%~nx1" >nul && exit /b 0
+exit /b 1
