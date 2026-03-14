@@ -11,7 +11,7 @@ using OpenTabletDriver.Plugin.Tablet;
 
 namespace XfntyPlugins
 {
-    public class InkPointer : IAbsolutePointer, ISynchronousPointer, IMouseButtonHandler, IPressureHandler, ITiltHandler, IEraserHandler, IHoverDistanceHandler
+    public class InkPointer : IAbsolutePointer, ISynchronousPointer, IPressureHandler
     {
         private IntPtr _pen;
         private Win32.POINTER_TYPE_INFO _penInput;
@@ -49,7 +49,6 @@ namespace XfntyPlugins
                 ? (Win32.POINTER_FLAGS.INCONTACT | Win32.POINTER_FLAGS.DOWN)
                 : (Win32.POINTER_FLAGS.UP);
 
-            _penInput.penInfo.pointerInfo.hwndTarget = Win32.GetForegroundWindow();
             _penInput.penInfo.pointerInfo.pointerFlags = flags;
             _penInput.penInfo.pointerInfo.ptPixelLocationRaw = _penInput.penInfo.pointerInfo.ptPixelLocation;
             Win32.InjectSyntheticPointerInput(_pen, ref _penInput, 1);
@@ -61,35 +60,18 @@ namespace XfntyPlugins
         {
         }
 
-        public void MouseDown(MouseButton button)
-        {
-        }
-
-        public void MouseUp(MouseButton button)
-        {
-        }
-
         public void SetPressure(float percentage)
         {
             _penInput.penInfo.pressure = (UInt32)(1024 * percentage);
             _changed = true;
         }
 
-        public void SetTilt(Vector2 tilt)
-        {
-        }
-
-        public void SetEraser(bool isEraser)
-        {
-        }
-
-        public void SetHoverDistance(uint distance)
-        {
-        }
-
         public void SetPosition(Vector2 pos)
         {
-            _penInput.penInfo.pointerInfo.ptPixelLocation = new Win32.POINT { X = (int)pos.X, Y = (int)pos.Y };
+            _penInput.penInfo.pointerInfo.ptPixelLocation = new Win32.POINT {
+                X = (int)pos.X,
+                Y = (int)pos.Y
+            };
             _changed = true;
         }
     }

@@ -49,11 +49,17 @@ exit /b 0
 
 
 :Build
-echo !esc![1;90mBuilding !esc![1;34mPlugin!esc![0m
-mkdir "%TMP_DIR%plugin\obj" "%OUT_DIR%plugin" 2> nul
-dotnet build "%~dp0plugin" -p:BaseIntermediateOutputPath="%TMP_DIR%plugin\obj/" ^
--p:AssemblyName=Ink -o "%OUT_DIR%plugin" > "%TMP_DIR%plugin\build.log" || (
-    type "%TMP_DIR%plugin\build.log" && exit /b 1
+set rebuild_plugin=0
+call :IsFileNewerThan "%~dp0plugin\plugin.cs" "%OUT_DIR%plugin\Ink.dll" && set rebuild_plugin=1
+call :IsFileNewerThan "%~dp0plugin\win32.cs" "%OUT_DIR%plugin\Ink.dll" && set rebuild_plugin=1
+call :IsFileNewerThan "%~dp0plugin\plugin.csproj" "%OUT_DIR%plugin\Ink.dll" && set rebuild_plugin=1
+if "%rebuild_plugin%"=="1" (
+    echo !esc![1;90mBuilding !esc![1;34mPlugin!esc![0m
+    mkdir "%TMP_DIR%plugin\obj" "%OUT_DIR%plugin" 2> nul
+    dotnet build "%~dp0plugin" -p:BaseIntermediateOutputPath="%TMP_DIR%plugin\obj/" ^
+    -p:AssemblyName=Ink -o "%OUT_DIR%plugin" > "%TMP_DIR%plugin\build.log" || (
+        type "%TMP_DIR%plugin\build.log" && exit /b 1
+    )
 )
 
 call :IsFileNewerThan "%~dp0tools\detector\main.c" "%OUT_DIR%detector\detector.exe"
@@ -101,6 +107,7 @@ exit /b 0
 
 
 :Test
+if not exist "%TMP_DIR%otd\OpenTabletDriver.UX.Wpf.exe" call :Setup || exit /b 1
 echo !esc![1;90mStarting !esc![1;34mOpenTabletDriver!esc![0m
 mkdir "%TMP_DIR%otd\userdata\Plugins\Ink" 2> nul
 copy /y "%OUT_DIR%plugin\Ink.dll" "%TMP_DIR%otd\userdata\Plugins\Ink" > nul

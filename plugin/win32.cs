@@ -6,13 +6,6 @@ namespace XfntyPlugins
 {
     public static partial class Win32
     {
-        [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
-        {
-            public Int32 X;
-            public Int32 Y;
-        }
-
         public enum POINTER_INPUT_TYPE
         {
             PT_POINTER  = 1,
@@ -84,7 +77,35 @@ namespace XfntyPlugins
             TILT_Y = 0x00000008
         }
 
-        [StructLayout(LayoutKind.Sequential)]
+        public enum EVENT_CONSTANT
+        {
+            EVENT_SYSTEM_FOREGROUND = 0x0003,
+            WINEVENT_OUTOFCONTEXT = 0x0000,
+            WINEVENT_SKIPOWNPROCESS = 0x0002,
+        }
+
+        public enum INPUT_TYPE
+        {
+            MOUSE = 0,
+            KEYBOARD = 1,
+        }
+
+        public enum MOUSEEVENTF
+        {
+            MOVE = 0x0001,
+            LEFTDOWN = 0x0002,
+            LEFTUP = 0x0004,
+            RIGHTDOWN = 0x0008,
+            RIGHTUP = 0x0010,
+            ABSOLUTE = 0x8000,
+        }
+
+        public struct POINT
+        {
+            public Int32 X;
+            public Int32 Y;
+        }
+
         public struct POINTER_INFO
         {
             public POINTER_INPUT_TYPE pointerType;
@@ -116,11 +137,40 @@ namespace XfntyPlugins
             public Int32 tiltY;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
         public struct POINTER_TYPE_INFO
         {
             public POINTER_INPUT_TYPE type;
             public POINTER_PEN_INFO penInfo;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct INPUT
+        {
+            [FieldOffset(0)]
+            public UInt32 type;
+            [FieldOffset(4)]
+            public MOUSEINPUT mi;
+            [FieldOffset(4)]
+            public KEYBDINPUT ki;
+        }
+
+        public struct MOUSEINPUT
+        {
+            public Int32  dx;
+            public Int32  dy;
+            public UInt32 mouseData;
+            public UInt32 dwFlags;
+            public UInt32 time;
+            public UInt64 dwExtraInfo;
+        }
+
+        public struct KEYBDINPUT
+        {
+            public UInt16 wVk;
+            public UInt16 wScan;
+            public UInt32 dwFlags;
+            public UInt32 time;
+            public UInt64 dwExtraInfo;
         }
 
         [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
@@ -132,7 +182,7 @@ namespace XfntyPlugins
         [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
         public static extern bool InjectSyntheticPointerInput(IntPtr device, ref POINTER_TYPE_INFO pointerInfo, UInt32 count);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
+        public static extern UInt32 SendInput(UInt32 cInputs, ref INPUT input, Int32 cbSize);
     }
 }
